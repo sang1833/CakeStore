@@ -1,0 +1,9 @@
+docs/
+.agent/
+.agents/
+be/src/bin/
+be/src/obj/
+be/src/appsettings.Development.json
+be/src/appsettings.json
+fe/node_modules/
+fe/dist/
