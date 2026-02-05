@@ -5,5 +5,16 @@ be/src/bin/
 be/src/obj/
 be/src/appsettings.Development.json
 be/src/appsettings.json
+be/src/update_log.txt
+be/src/migration_log.txt
+be/src/build_log.txt
+be/src/build_error.txt
+be/src/logs/
+be/src/.env
+be/src/appsettings.Production.json
+be/tests/CakeStore.UnitTests/bin/
+be/tests/CakeStore.UnitTests/obj/
+be/tests/CakeStore.IntegrationTests/bin/
+be/tests/CakeStore.IntegrationTests/obj/
 fe/node_modules/
 fe/dist/
