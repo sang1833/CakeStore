@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "fe": {
+    "cake-store-ui": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -56,10 +56,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "fe:build:production"
+              "buildTarget": "cake-store-ui:build:production"
             },
             "development": {
-              "buildTarget": "fe:build:development"
+              "buildTarget": "cake-store-ui:build:development"
             }
           },
           "defaultConfiguration": "development"
