@@ -1,0 +1,77 @@
+{
+    "HEADER": {
+        "CATALOG": "Catalog",
+        "OUR_STORY": "Our Story",
+        "LOGIN": "Login",
+        "CART": "Cart"
+    },
+    "AUTH": {
+        "WELCOME_BACK": "Welcome Back",
+        "SIGN_IN": "Sign In",
+        "CREATE_ACCOUNT": "Create Account",
+        "EMAIL": "Email Address",
+        "PASSWORD": "Password",
+        "NAME": "Full Name",
+        "CONFIRM_PASSWORD": "Confirm Password",
+        "FORGOT_PASSWORD": "Forgot Password?",
+        "NEW_HERE": "New here?",
+        "ALREADY_HAVE_ACCOUNT": "Already have an account?",
+        "LOGOUT": "Logout"
+    },
+    "CATALOG": {
+        "PRE_ORDER": "Pre-order",
+        "READY_TO_SHIP": "Ready to Ship",
+        "VIEW": "View",
+        "ADD_TO_CART": "Add",
+        "CUSTOMIZE": "Customize",
+        "HERO_TITLE": "Our Signature Creations",
+        "HERO_SUBTITLE": "Freshly baked for you, every single day.",
+        "LOADING": "Loading our delicious menu..."
+    },
+    "STORY": {
+        "TITLE": "Our Story",
+        "SUBTITLE": "A Journey of Sweet Passion",
+        "BEGINNING_TITLE": "The Beginning",
+        "BEGINNING_TEXT_1": "Founded in 2024, <strong>La Patisserie</strong> started with a simple belief: every celebration deserves a masterpiece. What began as a small home kitchen project has blossomed into a haven for dessert lovers.",
+        "BEGINNING_TEXT_2": "We blend traditional French pastry techniques with modern flavors, ensuring that every bite is not just sweet, but memorable.",
+        "PHILOSOPHY_TITLE": "Our Philosophy",
+        "PHILOSOPHY_TEXT": "<strong>Freshness First:</strong> We believe in the magic of \"Make to Order\". By baking small batches and customizing cakes upon request, we guarantee zero waste and maximum taste.",
+        "SIGNATURE": "Bon Appétit,"
+    },
+    "CART": {
+        "TITLE": "Shopping Cart",
+        "EMPTY": "Your cart feels a bit light...",
+        "BROWSE": "Browse Sweets",
+        "SUMMARY": "Summary",
+        "ITEMS": "Items",
+        "TOTAL": "Total",
+        "CHECKOUT": "Proceed to Checkout",
+        "PRE_ORDER": "Pre-order",
+        "READY_SHIP": "Ready to Ship"
+    },
+    "PROFILE": {
+        "MEMBER_SINCE": "Member since",
+        "EDIT": "Edit Profile",
+        "CONTACT": "Contact Info",
+        "ADDRESS": "Default Address",
+        "QUICK_LINKS": "Quick Links",
+        "HISTORY": "View Order History",
+        "MY_CART": "My Cart"
+    },
+    "ORDER": {
+        "TITLE": "Order History",
+        "ID": "Order ID",
+        "DATE": "Date",
+        "STATUS": "Status",
+        "TOTAL": "Total",
+        "REORDER": "Reorder",
+        "TRACK": "Track Order",
+        "STATUS_DELIVERED": "Delivered",
+        "STATUS_PROCESSING": "Processing",
+        "STATUS_PENDING": "Pending"
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "Something went wrong"
+    }
+}

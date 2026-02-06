@@ -1,55 +1,68 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, OnChanges } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { Product } from '../../../core/models/product.model';
 
 @Component({
-    selector: 'app-product-card',
-    standalone: true,
-    imports: [CommonModule, RouterLink, CurrencyPipe],
-    template: `
-    <div class="card glass-panel" [class.make-to-order]="product.type === 'MakeToOrder'">
+  selector: 'app-product-card',
+  standalone: true,
+  imports: [CommonModule, RouterLink, CurrencyPipe, TranslateModule],
+  template: `
       <!-- Image Area -->
-      <div class="image-wrapper">
-        <img [src]="product.imageUrl || 'assets/placeholder-cake.jpg'" [alt]="product.name">
+      <div [ngClass]="{'glass-panel animate-fade-in': true}" class="image-wrapper">
+        <img 
+          [routerLink]="['/products', product.id]" 
+          [src]="imageSrc()" 
+          (error)="onImageError()"
+          [alt]="product.name">
         <div class="badge" [class.type-a]="product.type === 'ReadyToShip'" [class.type-b]="product.type === 'MakeToOrder'">
-          {{ product.type === 'ReadyToShip' ? 'Ready to Ship' : 'Pre-order' }}
+          {{ (product.type === 'ReadyToShip' ? 'CATALOG.READY_TO_SHIP' : 'CATALOG.PRE_ORDER') | translate }}
         </div>
       </div>
 
       <!-- Content -->
       <div class="content">
-        <h3>{{ product.name }}</h3>
+        <h3 [routerLink]="['/products', product.id]" class="clickable-title">{{ product.name }}</h3>
         <p class="price">{{ product.price | currency:'USD' }}</p>
         
         <!-- Action Buttons -->
         <div class="actions">
           @if (product.type === 'ReadyToShip') {
-            <button class="btn-primary" (click)="addToCart.emit(product)">
-              Add to Cart 🛒
-            </button>
+            <div class="button-group">
+                <a [routerLink]="['/products', product.id]" class="btn-secondary small">
+                    {{ 'CATALOG.VIEW' | translate }}
+                </a>
+                <button class="btn-primary" (click)="addToCart.emit(product)">
+                  {{ 'CATALOG.ADD_TO_CART' | translate }} 🛒
+                </button>
+            </div>
           } @else {
-            <a [routerLink]="['/products', product.id]" class="btn-secondary">
-              Customize 🎨
+            <a [routerLink]="['/products', product.id]" class="btn-secondary full-width">
+              {{ 'CATALOG.CUSTOMIZE' | translate }} 🎨
             </a>
           }
         </div>
       </div>
-    </div>
   `,
-    styles: [`
+  styles: [`
     .card {
       height: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      background: white; /* Fallback */
+      background: white;
       
       &:hover {
         transform: translateY(-5px);
         box-shadow: var(--shadow-card);
       }
+    }
+
+    .clickable-title {
+        cursor: pointer;
+        &:hover { color: var(--color-primary); }
     }
 
     .image-wrapper {
@@ -79,6 +92,7 @@ import { Product } from '../../../core/models/product.model';
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      z-index: 2;
       
       &.type-a { background: var(--color-primary); color: white; }
       &.type-b { background: var(--color-secondary); color: white; }
@@ -110,6 +124,15 @@ import { Product } from '../../../core/models/product.model';
       margin-top: auto;
     }
 
+    .button-group {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        
+        .btn-primary { flex: 2; font-size: 0.9rem; padding: 10px; }
+        .btn-secondary { flex: 1; font-size: 0.9rem; padding: 10px; }
+    }
+
     .btn-secondary {
       display: inline-block;
       padding: 10px 24px;
@@ -119,15 +142,35 @@ import { Product } from '../../../core/models/product.model';
       font-weight: 600;
       text-transform: uppercase;
       font-size: 0.8rem;
+      text-decoration: none;
       
       &:hover {
         background: var(--color-secondary);
         color: white;
       }
+
+      &.full-width { display: block; width: 100%; box-sizing: border-box; }
     }
   `]
 })
-export class ProductCardComponent {
-    @Input({ required: true }) product!: Product;
-    @Output() addToCart = new EventEmitter<Product>();
+export class ProductCardComponent implements OnChanges {
+  @Input({ required: true }) product!: Product;
+  @Output() addToCart = new EventEmitter<Product>();
+
+  imageSrc = signal<string>('');
+
+  ngOnChanges() {
+    let imgUrl;
+    if (this.product.imageUrl) {
+      imgUrl = this.product.imageUrl;
+    } else {
+      imgUrl = 'assets/placeholder-cake.png';
+    }
+    this.imageSrc.set(imgUrl);
+  }
+
+  onImageError() {
+    this.imageSrc.set('assets/placeholder-cake.png');
+  }
 }
+

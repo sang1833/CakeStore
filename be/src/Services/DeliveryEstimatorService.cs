@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using cake_store_api.Data;
 using cake_store_api.Entities;
 using Microsoft.EntityFrameworkCore;
-
+using cake_store_api.DTOs;
 using cake_store_api.Interfaces;
 
 namespace cake_store_api.Services;
@@ -15,6 +17,61 @@ public class DeliveryEstimatorService : IDeliveryEstimatorService
     public DeliveryEstimatorService(AppDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    // This is the new method added by the user's instruction.
+    // It delegates to an internal or overloaded ValidateCartAsync.
+    // public async Task<(bool IsValid, List<string> Errors)> ValidateCartItemsAsync(List<CreateOrderItemDto> items)
+    // {
+    //     // This assumes an overload or internal method exists that takes List<(Guid ProductId, int Quantity)>
+    //     // For now, let's implement a basic validation for the internal method.
+    //     var result = await ValidateCartAsync(items.Select(i => (i.ProductId, i.Quantity)).ToList());
+    //     return result;
+    // }
+
+    // This is the internal/overloaded method that the above ValidateCartAsync calls.
+    // This implementation is a placeholder and should be filled with actual validation logic.
+    public async Task<(bool IsValid, List<string> Errors)> ValidateCartAsync(List<(Guid ProductId, int Quantity)> items)
+    {
+        var errors = new List<string>();
+        bool isValid = true;
+
+        var productIds = items.Select(x => x.ProductId).ToList();
+        var products = await _dbContext.Products
+            .Where(p => productIds.Contains(p.Id))
+            .ToListAsync();
+
+        foreach (var item in items)
+        {
+            var product = products.FirstOrDefault(p => p.Id == item.ProductId);
+            if (product == null)
+            {
+                errors.Add($"Product with ID {item.ProductId} not found.");
+                isValid = false;
+            }
+            else
+            {
+                // Example validation: quantity must be positive
+                if (item.Quantity <= 0)
+                {
+                    errors.Add($"Quantity for product {product.Name} (ID: {item.ProductId}) must be positive.");
+                    isValid = false;
+                }
+
+                // Add more validation rules here, e.g., stock checks for ReadyToShipProduct
+                if (product is ReadyToShipProduct rtsProduct)
+                {
+                    if (rtsProduct.StockQuantity < item.Quantity)
+                    {
+                        errors.Add($"Not enough stock for {rtsProduct.Name}. Available: {rtsProduct.StockQuantity}, Requested: {item.Quantity}.");
+                        isValid = false;
+                    }
+                }
+                // For MakeToOrderProduct, you might validate if lead time is reasonable, etc.
+            }
+        }
+
+        return (isValid, errors);
     }
     
     public async Task<DateOnly> EstimateDeliveryDateAsync(List<(Guid ProductId, int Quantity)> items)

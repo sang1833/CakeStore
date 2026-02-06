@@ -1,55 +1,71 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
-// using System.Text.Json;
-// using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+
 using cake_store_api.Data;
 using cake_store_api.DTOs;
 using cake_store_api.Entities;
 using cake_store_api.Enums;
-using Microsoft.EntityFrameworkCore;
-
-using cake_store_api.Interfaces;
 using cake_store_api.Exceptions;
+using cake_store_api.Interfaces;
 using cake_store_api.Mappings;
 
 namespace cake_store_api.Services;
 
 public class OrderService : IOrderService
 {
-    private readonly AppDbContext _dbContext;
+    private readonly AppDbContext _context;
+    private readonly IDeliveryEstimatorService _deliveryEstimator;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public OrderService(AppDbContext dbContext)
+    public OrderService(AppDbContext context, IDeliveryEstimatorService deliveryEstimator, IHttpContextAccessor httpContextAccessor)
     {
-        _dbContext = dbContext;
+        _context = context;
+        _deliveryEstimator = deliveryEstimator;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task AdvanceStatusAsync(Guid orderId, OrderStatus newStatus)
     {
-        var order = await _dbContext.Orders.FindAsync(orderId);
+        var order = await _context.Orders.FindAsync(orderId);
         if (order == null) throw new NotFoundException($"Order {orderId} not found");
 
         order.Status = newStatus;
-        await _dbContext.SaveChangesAsync();
+        await _context.SaveChangesAsync();
     }
 
     public async Task<CreateOrderResponse> PlaceOrderAsync(CreateOrderRequest request)
     {
-        // 1. Transaction
-        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        // 1. Get User ID if logged in
+        var userId = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+        // 2. Validate Cart & Stock
+        // var validation = await _deliveryEstimator.ValidateCartItemsAsync(request.Items);
+        // if (!validation.IsValid)
+        // {
+        //     throw new InventoryException(string.Join(", ", validation.Errors));
+        // }
+
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             var productIds = request.Items.Select(i => i.ProductId).ToList();
-            var products = await _dbContext.Products
+            var products = await _context.Products
                 .Where(p => productIds.Contains(p.Id))
                 .ToListAsync();
 
             var order = new Order
             {
+                UserId = userId,
                 CustomerName = request.CustomerName,
+                CustomerEmail = request.CustomerEmail,
                 CustomerPhone = request.CustomerPhone,
                 ShippingAddress = request.ShippingAddress,
-                DeliveryDate = request.DesiredDeliveryDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc), 
+                DeliveryDate = request.DesiredDeliveryDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
                 Status = OrderStatus.New
             };
 
@@ -72,7 +88,7 @@ public class OrderService : IOrderService
                 {
                     DateOnly targetDate = request.DesiredDeliveryDate;
 
-                    var slot = await _dbContext.ProductionSlots
+                    var slot = await _context.ProductionSlots
                         .FirstOrDefaultAsync(s => s.Date == targetDate);
 
                     if (slot == null)
@@ -83,7 +99,7 @@ public class OrderService : IOrderService
                             MaxCapacity = 50, // Default constraint
                             ReservedCapacity = 0
                         };
-                        _dbContext.ProductionSlots.Add(slot);
+                        _context.ProductionSlots.Add(slot);
                     }
 
                     if (slot.ReservedCapacity + itemDto.Quantity > slot.MaxCapacity)
@@ -100,12 +116,12 @@ public class OrderService : IOrderService
                     ProductName = product.Name,
                     Price = product.Price,
                     Quantity = itemDto.Quantity,
-                    CustomizationData = null // itemDto.CustomizationData != null ? JsonNode.Parse(itemDto.CustomizationData) : null
+                    CustomizationData = null 
                 });
             }
 
-            _dbContext.Orders.Add(order);
-            await _dbContext.SaveChangesAsync();
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
 
             await transaction.CommitAsync();
 
@@ -120,7 +136,7 @@ public class OrderService : IOrderService
 
     public async Task<IEnumerable<Order>> GetOrdersAsync()
     {
-        return await _dbContext.Orders
+        return await _context.Orders
             .Include(o => o.Items)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
@@ -128,8 +144,23 @@ public class OrderService : IOrderService
 
     public async Task<Order?> GetOrderByIdAsync(Guid id)
     {
-        return await _dbContext.Orders
+        return await _context.Orders
             .Include(o => o.Items)
             .FirstOrDefaultAsync(o => o.Id == id);
+    }
+
+    public async Task<IEnumerable<OrderSummaryDto>> GetOrdersByUserIdAsync(string userId)
+    {
+        return await _context.Orders
+            .Where(o => o.UserId == userId)
+            .OrderByDescending(o => o.CreatedAt)
+            .Select(o => new OrderSummaryDto(
+                o.Id,
+                o.CreatedAt,
+                o.Status.ToString(),
+                o.Items.Sum(i => i.Price * i.Quantity),
+                o.Items.Sum(i => i.Quantity)
+            ))
+            .ToListAsync();
     }
 }

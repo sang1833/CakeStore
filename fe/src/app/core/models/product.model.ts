@@ -7,6 +7,7 @@ export interface Product {
     description?: string;
     imageUrl?: string;
     type: ProductType;
+    isActive: boolean;
 }
 
 export interface ReadyToShipProduct extends Product {
@@ -18,23 +19,47 @@ export interface ReadyToShipProduct extends Product {
 export interface MakeToOrderProduct extends Product {
     type: 'MakeToOrder';
     leadTimeHours: number;
-    // JSON schema for the form (e.g., { "size": ["6inch", "8inch"], "message": "text" })
     customizationSchema: Record<string, any>;
 }
 
 export interface CartItem {
     productId: string;
-    productName: string;
+    productName: string; // Used for display, not sent to API for validation usually
     price: number;
     quantity: number;
     productType: ProductType;
-    // For MakeToOrder items
     customizationData?: Record<string, any>;
 }
 
-export interface ProductionSlot {
-    date: string; // DateOnly string YYYY-MM-DD
-    maxCapacity: number;
-    reservedCapacity: number;
-    availableCapacity: number;
+export interface ValidateCartRequest {
+    items: {
+        productId: string;
+        quantity: number;
+    }[];
+}
+
+export interface ValidateCartResponse {
+    isSlotAvailable: boolean;
+    earliestAvailableDate: string; // DateOnly string YYYY-MM-DD
+    message: string;
+}
+
+export interface OrderItemRequest {
+    productId: string;
+    quantity: number;
+    customizationData?: Record<string, any>;
+}
+
+export interface CreateOrderRequest {
+    customerName: string;
+    customerEmail: string; // Added simplistic customer info
+    deliveryDate?: string; // DateOnly string YYYY-MM-DD
+    items: OrderItemRequest[];
+}
+
+export interface CreateOrderResponse {
+    orderId: string;
+    status: string;
+    deliveryDate: string;
+    totalAmount: number;
 }

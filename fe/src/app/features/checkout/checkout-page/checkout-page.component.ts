@@ -1,15 +1,17 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
+import { OrderService } from '../../../core/services/order.service';
 import { DateSelectorComponent } from '../date-selector/date-selector.component';
 import { FormsModule } from '@angular/forms';
+import { CreateOrderRequest } from '../../../core/models/product.model';
 
 @Component({
-    selector: 'app-checkout-page',
-    standalone: true,
-    imports: [CommonModule, DateSelectorComponent, CurrencyPipe, RouterLink, FormsModule],
-    template: `
+  selector: 'app-checkout-page',
+  standalone: true,
+  imports: [CommonModule, DateSelectorComponent, CurrencyPipe, RouterLink, FormsModule],
+  template: `
     <div class="checkout-container animate-fade-in">
       <h1>Checkout</h1>
 
@@ -20,32 +22,43 @@ import { FormsModule } from '@angular/forms';
         </div>
       } @else {
         <div class="grid">
-          <!-- Left: Items -->
-          <div class="cart-items glass-panel">
-            <h2>Your Selection</h2>
-            @for (item of cart.cartItems(); track item.productId + item.customizationData) {
-              <div class="cart-item">
-                <div class="details">
-                  <h4>{{ item.productName }}</h4>
-                  <p class="meta">{{ item.productType === 'MakeToOrder' ? 'Pre-order' : 'Ready to Ship' }}</p>
-                  @if (item.customizationData) {
-                    <ul class="custom-list">
-                      @for (key of objectKeys(item.customizationData); track key) {
-                        <li><strong>{{ key }}:</strong> {{ item.customizationData[key] }}</li>
+          <!-- Left: Items & Customer Info -->
+          <div class="main-column">
+             <div class="cart-items glass-panel">
+                <h2>Your Selection</h2>
+                @for (item of cart.cartItems(); track item.productId + item.customizationData) {
+                  <div class="cart-item">
+                    <div class="details">
+                      <h4>{{ item.productName }}</h4>
+                      <p class="meta">{{ item.productType === 'MakeToOrder' ? 'Pre-order' : 'Ready to Ship' }}</p>
+                      @if (item.customizationData) {
+                        <ul class="custom-list">
+                          @for (key of objectKeys(item.customizationData); track key) {
+                            <li><strong>{{ key }}:</strong> {{ item.customizationData[key] }}</li>
+                          }
+                        </ul>
                       }
-                    </ul>
-                  }
-                </div>
-                <div class="qty-price">
-                  <div class="qty-control">
-                    <button (click)="updateQty(item, -1)">-</button>
-                    <span>{{ item.quantity }}</span>
-                    <button (click)="updateQty(item, 1)">+</button>
+                    </div>
+                    <div class="qty-price">
+                       <span>x {{ item.quantity }}</span> 
+                       <div class="price">{{ item.price * item.quantity | currency:'USD' }}</div>
+                    </div>
                   </div>
-                  <div class="price">{{ item.price * item.quantity | currency:'USD' }}</div>
+                }
+             </div>
+
+             <!-- Simple Customer Form -->
+             <div class="customer-form glass-panel">
+                <h2>Your Details</h2>
+                <div class="form-group">
+                   <label>Name</label>
+                   <input [(ngModel)]="customerName" placeholder="Full Name">
                 </div>
-              </div>
-            }
+                <div class="form-group">
+                   <label>Email</label>
+                   <input [(ngModel)]="customerEmail" placeholder="email@example.com">
+                </div>
+             </div>
           </div>
 
           <!-- Right: Summary & Schedule -->
@@ -53,11 +66,7 @@ import { FormsModule } from '@angular/forms';
             <h2>Order Summary</h2>
             
             <div class="totals">
-              <div class="row">
-                <span>Subtotal</span>
-                <span>{{ cart.total() | currency:'USD' }}</span>
-              </div>
-              <div class="row total">
+               <div class="row total">
                 <span>Total</span>
                 <span>{{ cart.total() | currency:'USD' }}</span>
               </div>
@@ -75,146 +84,96 @@ import { FormsModule } from '@angular/forms';
                   <small class="error-text">Please select a delivery date.</small>
                 }
               </div>
-            } @else {
-              <div class="info-box">
-                <p>Standard Shipping (2-3 days)</p>
-              </div>
             }
 
             <button class="btn-primary full-width" 
-              [disabled]="cart.hasMakeToOrderItems() && !selectedDeliveryDate()"
+              [disabled]="(cart.hasMakeToOrderItems() && !selectedDeliveryDate()) || !customerName || !customerEmail || isSubmitting()"
               (click)="placeOrder()">
-              Place Order
+              @if (isSubmitting()) { 
+                Processing... 
+              } @else {
+                Place Order
+              }
             </button>
+            
+            @if (errorMessage()) {
+                <div class="error-banner">{{ errorMessage() }}</div>
+            }
           </div>
         </div>
       }
     </div>
   `,
-    styles: [`
-    .checkout-container {
-      max-width: 1000px;
-      margin: 0 auto;
-    }
-
+  styles: [`
+    .checkout-container { max-width: 1000px; margin: 0 auto; }
     h1 { color: var(--color-secondary); margin-bottom: var(--spacing-lg); }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: var(--spacing-lg);
-      align-items: start;
-    }
-    
+    .grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--spacing-lg); align-items: start; }
     @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
-
-    .glass-panel {
-      padding: var(--spacing-lg);
-      background: white;
-    }
-
-    .cart-item {
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1px solid #eee;
-      padding: var(--spacing-sm) 0;
-      
-      &:last-child { border-bottom: none; }
-    }
-
+    
+    .glass-panel { padding: var(--spacing-lg); background: white; margin-bottom: var(--spacing-lg); }
+    
+    .cart-item { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: var(--spacing-sm) 0; }
     .details h4 { margin: 0; color: var(--color-text-main); }
-    .meta { font-size: 0.8rem; color: #888; margin: 4px 0; }
-    .custom-list {
-      list-style: none;
-      padding: 0;
-      font-size: 0.85rem;
-      opacity: 0.9;
-      li { margin-bottom: 2px; }
-    }
-
-    .qty-control {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #f5f5f5;
-      padding: 4px 8px;
-      border-radius: 20px;
-      
-      button {
-        border: none;
-        background: none;
-        cursor: pointer;
-        font-weight: bold;
-        width: 24px;
-        &:hover { color: var(--color-primary); }
-      }
-    }
-
-    .qty-price {
-      text-align: right;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 10px;
-    }
-
-    .schedule-section {
-      border-top: 1px solid #eee;
-      margin-top: var(--spacing-md);
-      padding-top: var(--spacing-md);
-    }
-
-    .btn-primary.full-width {
-      width: 100%;
-      margin-top: var(--spacing-lg);
-      justify-content: center;
-      
-      &:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-      }
+    .meta { font-size: 0.8rem; color: #888; }
+    
+    .customer-form {
+        .form-group {
+            margin-bottom: 1rem;
+            label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+            input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        }
     }
     
-    .error-text { color: var(--color-accent); display: block; margin-top: 5px; }
-
-    .totals {
-      margin-bottom: var(--spacing-md);
-      .row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        &.total {
-          font-weight: 700;
-          font-size: 1.2rem;
-          color: var(--color-primary-dark);
-          border-top: 1px dashed #ddd;
-          padding-top: 8px;
-        }
-      }
-    }
+    .btn-primary.full-width { width: 100%; margin-top: var(--spacing-lg); justify-content: center; }
+    .error-banner { margin-top: 10px; color: #d93025; background: #fce8e6; padding: 10px; border-radius: 8px; font-size: 0.9rem; }
+    .qty-price { text-align: right; }
   `]
 })
 export class CheckoutPageComponent {
-    cart = inject(CartService);
-    selectedDeliveryDate = signal<string | null>(null);
+  cart = inject(CartService);
+  orderService = inject(OrderService);
+  router = inject(Router);
 
-    objectKeys(obj: any): string[] {
-        return Object.keys(obj);
-    }
+  selectedDeliveryDate = signal<string | null>(null);
+  customerName = '';
+  customerEmail = '';
+  isSubmitting = signal(false);
+  errorMessage = signal<string | null>(null);
 
-    updateQty(item: any, change: number) {
-        this.cart.updateQuantity(item.productId, item.quantity + change, item.customizationData);
-    }
+  objectKeys(obj: any): string[] { return Object.keys(obj); }
+  onDateSelected(date: string) { this.selectedDeliveryDate.set(date); }
 
-    onDateSelected(date: string) {
-        this.selectedDeliveryDate.set(date);
-    }
+  placeOrder() {
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
 
-    placeOrder() {
-        alert('Order Placed! (Mock)');
-        // Implementation: Call ApiService.placeOrder({ items, deliveryDate })
+    const orderRequest: CreateOrderRequest = {
+      customerName: this.customerName,
+      customerEmail: this.customerEmail,
+      deliveryDate: this.selectedDeliveryDate() || undefined, // Backend might expect null/undefined if not applicable? Actually logic dictates Type B needs it.
+      items: this.cart.cartItems().map(i => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        customizationData: i.customizationData
+      }))
+    };
+
+    this.orderService.placeOrder(orderRequest).subscribe({
+      next: (res) => {
+        alert(`Order Placed Successfully! ID: ${res.orderId}`);
         this.cart.clearCart();
-    }
+        this.router.navigate(['/catalog']); // Redirect to catalog (or success page if I had one)
+      },
+      error: (err) => {
+        console.error(err);
+        this.isSubmitting.set(false);
+        if (err.status === 409) {
+          this.errorMessage.set('Sorry, the selected slot just filled up! Please try another date.');
+          // Ideally trigger validation refresh here
+        } else {
+          this.errorMessage.set('Something went wrong. Please try again.');
+        }
+      }
+    });
+  }
 }

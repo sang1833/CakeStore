@@ -1,0 +1,77 @@
+{
+    "HEADER": {
+        "CATALOG": "Danh mục",
+        "OUR_STORY": "Câu chuyện",
+        "LOGIN": "Đăng nhập",
+        "CART": "Giỏ hàng"
+    },
+    "AUTH": {
+        "WELCOME_BACK": "Chào mừng trở lại",
+        "SIGN_IN": "Đăng nhập",
+        "CREATE_ACCOUNT": "Tạo tài khoản",
+        "EMAIL": "Địa chỉ Email",
+        "PASSWORD": "Mật khẩu",
+        "NAME": "Họ và tên",
+        "CONFIRM_PASSWORD": "Xác nhận mật khẩu",
+        "FORGOT_PASSWORD": "Quên mật khẩu?",
+        "NEW_HERE": "Bạn mới đến đây?",
+        "ALREADY_HAVE_ACCOUNT": "Đã có tài khoản?",
+        "LOGOUT": "Đăng xuất"
+    },
+    "CATALOG": {
+        "PRE_ORDER": "Đặt trước",
+        "READY_TO_SHIP": "Có sẵn",
+        "VIEW": "Xem",
+        "ADD_TO_CART": "Thêm",
+        "CUSTOMIZE": "Tùy chỉnh",
+        "HERO_TITLE": "Những chiếc bánh đặc biệt nhất",
+        "HERO_SUBTITLE": "Bánh mới mỗi ngày, dành riêng cho bạn.",
+        "LOADING": "Đang tải thực đơn..."
+    },
+    "STORY": {
+        "TITLE": "Câu chuyện của chúng tôi",
+        "SUBTITLE": "Hành trình của niềm đam mê ngọt ngào",
+        "BEGINNING_TITLE": "Khởi đầu",
+        "BEGINNING_TEXT_1": "Được thành lập vào năm 2024, <strong>La Patisserie</strong> bắt đầu với một niềm tin đơn giản: mỗi buổi lễ kỷ niệm đều xứng đáng có một kiệt tác. Những gì bắt đầu như một dự án bếp tại gia nhỏ bé đã phát triển thành một thiên đường cho những người yêu thích món tráng miệng.",
+        "BEGINNING_TEXT_2": "Chúng tôi kết hợp kỹ thuật làm bánh ngọt truyền thống của Pháp với hương vị hiện đại, đảm bảo rằng mỗi miếng bánh không chỉ ngọt ngào mà còn đáng nhớ.",
+        "PHILOSOPHY_TITLE": "Triết lý của chúng tôi",
+        "PHILOSOPHY_TEXT": "<strong>Tươi mới là trên hết:</strong> Chúng tôi tin vào phép màu của việc \"Làm theo yêu cầu\". Bằng cách nướng các mẻ nhỏ và tùy chỉnh bánh theo yêu cầu, chúng tôi đảm bảo không lãng phí và hương vị tối đa.",
+        "SIGNATURE": "Chúc ngon miệng,"
+    },
+    "CART": {
+        "TITLE": "Giỏ hàng",
+        "EMPTY": "Giỏ hàng của bạn đang trống...",
+        "BROWSE": "Xem bánh ngọt",
+        "SUMMARY": "Tổng quan",
+        "ITEMS": "Sản phẩm",
+        "TOTAL": "Tổng cộng",
+        "CHECKOUT": "Thanh toán",
+        "PRE_ORDER": "Đặt trước",
+        "READY_SHIP": "Có sẵn"
+    },
+    "PROFILE": {
+        "MEMBER_SINCE": "Thành viên từ",
+        "EDIT": "Chỉnh sửa hồ sơ",
+        "CONTACT": "Thông tin liên hệ",
+        "ADDRESS": "Địa chỉ mặc định",
+        "QUICK_LINKS": "Liên kết nhanh",
+        "HISTORY": "Lịch sử đơn hàng",
+        "MY_CART": "Giỏ hàng của tôi"
+    },
+    "ORDER": {
+        "TITLE": "Lịch sử đơn hàng",
+        "ID": "Mã đơn",
+        "DATE": "Ngày đặt",
+        "STATUS": "Trạng thái",
+        "TOTAL": "Tổng cộng",
+        "REORDER": "Đặt lại",
+        "TRACK": "Theo dõi",
+        "STATUS_DELIVERED": "Đã giao",
+        "STATUS_PROCESSING": "Đang xử lý",
+        "STATUS_PENDING": "Đang chờ"
+    },
+    "common": {
+        "loading": "Đang tải...",
+        "error": "Đã có lỗi xảy ra"
+    }
+}

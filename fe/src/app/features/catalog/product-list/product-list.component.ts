@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductCardComponent } from '../product-card/product-card.component';
@@ -7,13 +8,13 @@ import { Product } from '../../../core/models/product.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
-    selector: 'app-product-list',
-    standalone: true,
-    imports: [CommonModule, ProductCardComponent],
-    template: `
+  selector: 'app-product-list',
+  standalone: true,
+  imports: [CommonModule, ProductCardComponent, TranslateModule],
+  template: `
     <div class="hero animate-fade-in">
-      <h1>Our Signature Creations</h1>
-      <p>Freshly baked for you, every single day.</p>
+      <h1>{{ 'CATALOG.HERO_TITLE' | translate }}</h1>
+      <p>{{ 'CATALOG.HERO_SUBTITLE' | translate }}</p>
     </div>
     
     <div class="grid">
@@ -27,12 +28,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
       } @empty {
         <!-- Skeleton / Empty State -->
         <div class="loading-state">
-           <p>Loading our delicious menu...</p>
+           <p>{{ 'CATALOG.LOADING' | translate }}</p>
         </div>
       }
     </div>
   `,
-    styles: [`
+  styles: [`
     .hero {
       text-align: center;
       margin-bottom: var(--spacing-xl);
@@ -69,15 +70,16 @@ import { toSignal } from '@angular/core/rxjs-interop';
   `]
 })
 export class ProductListComponent {
-    private productService = inject(ProductService);
-    private cartService = inject(CartService);
+  private productService = inject(ProductService);
+  private cartService = inject(CartService);
+  translate = inject(TranslateService);
 
-    // Convert Observable to Signal
-    products = toSignal(this.productService.getProducts(), { initialValue: [] });
+  // Convert Observable to Signal
+  products = toSignal(this.productService.getProducts(), { initialValue: [] });
 
-    onAddToCart(product: Product) {
-        this.cartService.addToCart(product);
-        // Todo: Add Toast Notification
-        console.log('Added to cart:', product.name);
-    }
+  onAddToCart(product: Product) {
+    this.cartService.addToCart(product);
+    // Todo: Add Toast Notification
+    console.log('Added to cart:', product.name);
+  }
 }

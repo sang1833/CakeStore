@@ -5,6 +5,7 @@ using cake_store_api.Services;
 using cake_store_api.Enums;
 using cake_store_api.Mappings;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace cake_store_api.Controllers;
 
@@ -51,5 +52,16 @@ public class OrdersController : ControllerBase
         var order = await _orderService.GetOrderByIdAsync(id);
         if (order == null) return NotFound();
         return Ok(order);
+    }
+
+    [HttpGet("history")]
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<OrderSummaryDto>>> GetOrderHistory()
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var orders = await _orderService.GetOrdersByUserIdAsync(userId);
+        return Ok(orders);
     }
 }

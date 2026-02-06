@@ -10,4 +10,5 @@ public interface IOrderService
     Task AdvanceStatusAsync(Guid orderId, OrderStatus newStatus);
     Task<IEnumerable<Order>> GetOrdersAsync();
     Task<Order?> GetOrderByIdAsync(Guid id);
+    Task<IEnumerable<OrderSummaryDto>> GetOrdersByUserIdAsync(string userId);
 }

@@ -8,15 +8,18 @@ import { CartService } from '../../../core/services/cart.service';
 import { Product, MakeToOrderProduct } from '../../../core/models/product.model';
 
 @Component({
-    selector: 'app-product-detail',
-    standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, CurrencyPipe],
-    template: `
+  selector: 'app-product-detail',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe],
+  template: `
     @if (product(); as p) {
       <div class="detail-container glass-panel animate-fade-in">
         <!-- Visuals -->
         <div class="image-section">
-           <img [src]="p.imageUrl || 'assets/placeholder-cake.jpg'" [alt]="p.name">
+           <img   
+            [src]="imageSrc()" 
+            (error)="onImageError()" 
+            [alt]="p.name">
         </div>
 
         <!-- Info & Actions -->
@@ -83,7 +86,7 @@ import { Product, MakeToOrderProduct } from '../../../core/models/product.model'
       <div class="loading">Loading details...</div>
     }
   `,
-    styles: [`
+  styles: [`
     .detail-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -143,67 +146,83 @@ import { Product, MakeToOrderProduct } from '../../../core/models/product.model'
   `]
 })
 export class ProductDetailComponent {
-    private route = inject(ActivatedRoute);
-    private productService = inject(ProductService);
-    private cartService = inject(CartService);
-    private fb = inject(FormBuilder);
+  private route = inject(ActivatedRoute);
+  private productService = inject(ProductService);
+  private cartService = inject(CartService);
+  private fb = inject(FormBuilder);
 
-    // Get ID from Route
-    // Note: params is an Observable. We want to switchMap or just subscribe.
-    // Using toSignal on route.params is tricky if we want to chain.
-    // Let's use standard signal effect pattern or RxJS.
+  // Get ID from Route
+  // Note: params is an Observable. We want to switchMap or just subscribe.
+  // Using toSignal on route.params is tricky if we want to chain.
+  // Let's use standard signal effect pattern or RxJS.
 
-    product = signal<Product | null>(null);
-    customizationForm: FormGroup = this.fb.group({
-        inscription: ['', [Validators.maxLength(30)]]
+  product = signal<Product | null>(null);
+  customizationForm: FormGroup = this.fb.group({
+    inscription: ['', [Validators.maxLength(30)]]
+  });
+
+  imageSrc = signal<string>('');
+
+  constructor() {
+    // React to route changes
+    this.route.params.subscribe(params => {
+      const id = params['id'];
+      if (id) {
+        this.loadProduct(id);
+      }
     });
+  }
 
-    constructor() {
-        // React to route changes
-        this.route.params.subscribe(params => {
-            const id = params['id'];
-            if (id) {
-                this.loadProduct(id);
-            }
-        });
+  ngOnChanges(p: Product) {
+    let imgUrl;
+    if (p.imageUrl) {
+      imgUrl = p.imageUrl;
+    } else {
+      imgUrl = 'assets/placeholder-cake.png';
     }
+    this.imageSrc.set(imgUrl);
+  }
 
-    loadProduct(id: string) {
-        this.productService.getProductById(id).subscribe(p => {
-            this.product.set(p);
-            if (p.type === 'MakeToOrder') {
-                this.initForm(p as MakeToOrderProduct);
-            }
-        });
-    }
+  onImageError() {
+    this.imageSrc.set('assets/placeholder-cake.png');
+  }
 
-    initForm(p: MakeToOrderProduct) {
-        // Dynamically add controls based on schema
-        const schema = p.customizationSchema || {};
-        Object.keys(schema).forEach(key => {
-            this.customizationForm.addControl(key, this.fb.control('', Validators.required));
-        });
-    }
+  loadProduct(id: string) {
+    this.productService.getProductById(id).subscribe(p => {
+      this.product.set(p);
+      if (p.type === 'MakeToOrder') {
+        this.initForm(p as MakeToOrderProduct);
+      }
+    });
+  }
 
-    getSchemaKeys(p: Product): string[] {
-        if (p.type !== 'MakeToOrder') return [];
-        const mto = p as MakeToOrderProduct;
-        return mto.customizationSchema ? Object.keys(mto.customizationSchema) : [];
-    }
+  initForm(p: MakeToOrderProduct) {
+    // Dynamically add controls based on schema
+    const schema = p.customizationSchema || {};
+    Object.keys(schema).forEach(key => {
+      this.customizationForm.addControl(key, this.fb.control('', Validators.required));
+    });
+  }
 
-    getSchemaOptions(p: Product, key: string): string[] | null {
-        const mto = p as MakeToOrderProduct;
-        const val = mto.customizationSchema[key];
-        return Array.isArray(val) ? val : null;
-    }
+  getSchemaKeys(p: Product): string[] {
+    if (p.type !== 'MakeToOrder') return [];
+    const mto = p as MakeToOrderProduct;
+    return mto.customizationSchema ? Object.keys(mto.customizationSchema) : [];
+  }
 
-    addToCart(p: Product) {
-        if (p.type === 'MakeToOrder') {
-            if (this.customizationForm.invalid) return;
-            const customData = this.customizationForm.value;
-            this.cartService.addToCart(p, 1, customData);
-        } else {
-            this.cartService.addToCart(p);
-        }
+  getSchemaOptions(p: Product, key: string): string[] | null {
+    const mto = p as MakeToOrderProduct;
+    const val = mto.customizationSchema[key];
+    return Array.isArray(val) ? val : null;
+  }
+
+  addToCart(p: Product) {
+    if (p.type === 'MakeToOrder') {
+      if (this.customizationForm.invalid) return;
+      const customData = this.customizationForm.value;
+      this.cartService.addToCart(p, 1, customData);
+    } else {
+      this.cartService.addToCart(p);
     }
+  }
 }
