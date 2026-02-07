@@ -59,7 +59,8 @@ public class AuthController : ControllerBase
             var user = await _userManager.FindByEmailAsync(request.Email);
             if (user == null) return Unauthorized();
 
-            var token = GenerateJwtToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            var token = GenerateJwtToken(user, roles);
 
             var userDto = new UserDto(user.Id, user.Email!, user.FullName ?? "");
             return Ok(new AuthResponse(token, userDto));
@@ -68,7 +69,7 @@ public class AuthController : ControllerBase
         return Unauthorized(new { Message = "Invalid login attempt" });
     }
 
-    private string GenerateJwtToken(ApplicationUser user)
+    private string GenerateJwtToken(ApplicationUser user, IList<string> roles)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
         var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]!);
@@ -79,6 +80,11 @@ public class AuthController : ControllerBase
             new Claim(JwtRegisteredClaimNames.Email, user.Email!),
             new Claim(ClaimTypes.Name, user.FullName ?? "")
         };
+
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {

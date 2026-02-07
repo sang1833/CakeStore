@@ -158,9 +158,75 @@ public class OrderService : IOrderService
                 o.Id,
                 o.CreatedAt,
                 o.Status.ToString(),
-                o.Items.Sum(i => i.Price * i.Quantity),
-                o.Items.Sum(i => i.Quantity)
+                o.TotalAmount,
+                o.Items.Count
             ))
             .ToListAsync();
+    }
+
+    // Admin methods
+    public async Task<PaginatedResult<Order>> GetOrdersWithFilterAsync(OrderFilterRequest filter)
+    {
+        var query = _context.Orders
+            .Include(o => o.Items)
+            .AsQueryable();
+
+        // Apply filters
+        if (filter.Status.HasValue)
+        {
+            query = query.Where(o => o.Status == filter.Status.Value);
+        }
+
+        if (filter.StartDate.HasValue)
+        {
+            query = query.Where(o => o.CreatedAt >= filter.StartDate.Value);
+        }
+
+        if (filter.EndDate.HasValue)
+        {
+            query = query.Where(o => o.CreatedAt <= filter.EndDate.Value);
+        }
+
+        if (!string.IsNullOrEmpty(filter.CustomerEmail))
+        {
+            query = query.Where(o => o.CustomerEmail != null && o.CustomerEmail.Contains(filter.CustomerEmail));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var orders = await query
+            .OrderByDescending(o => o.CreatedAt)
+            .Skip((filter.Page - 1) * filter.PageSize)
+            .Take(filter.PageSize)
+            .ToListAsync();
+
+        var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+        return new PaginatedResult<Order>(
+            orders,
+            totalCount,
+            filter.Page,
+            filter.PageSize,
+            totalPages
+        );
+    }
+
+    public async Task<OrderStatsDto> GetOrderStatsAsync()
+    {
+        var orders = await _context.Orders.ToListAsync();
+
+        return new OrderStatsDto(
+            TotalOrders: orders.Count,
+            NewOrders: orders.Count(o => o.Status == OrderStatus.New),
+            ProcessingOrders: orders.Count(o => o.Status == OrderStatus.Production),
+            CompletedOrders: orders.Count(o => o.Status == OrderStatus.Completed),
+            CancelledOrders: orders.Count(o => o.Status == OrderStatus.Cancelled),
+            TotalRevenue: orders.Where(o => o.Status == OrderStatus.Completed).Sum(o => o.TotalAmount)
+        );
+    }
+
+    public async Task UpdateOrderStatusAsync(Guid orderId, OrderStatus newStatus)
+    {
+        await AdvanceStatusAsync(orderId, newStatus);
     }
 }

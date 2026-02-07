@@ -64,4 +64,36 @@ public class OrdersController : ControllerBase
         var orders = await _orderService.GetOrdersByUserIdAsync(userId);
         return Ok(orders);
     }
+
+    // Admin endpoints
+    [HttpGet("admin")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<PaginatedResult<Order>>> GetOrdersWithFilter([FromQuery] OrderFilterRequest filter)
+    {
+        var result = await _orderService.GetOrdersWithFilterAsync(filter);
+        return Ok(result);
+    }
+
+    [HttpGet("admin/stats")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<OrderStatsDto>> GetOrderStats()
+    {
+        var stats = await _orderService.GetOrderStatsAsync();
+        return Ok(stats);
+    }
+
+    [HttpPatch("admin/{id}/status")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> UpdateOrderStatus(Guid id, [FromQuery] OrderStatus status)
+    {
+        await _orderService.UpdateOrderStatusAsync(id, status);
+        return Ok(new { OrderId = id, Status = status.ToString() });
+    }
 }

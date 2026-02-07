@@ -26,3 +26,29 @@ public record OrderItemDto(
     int Quantity,
     decimal Price
 );
+
+public record OrderFilterRequest(
+    OrderStatus? Status,
+    DateTime? StartDate,
+    DateTime? EndDate,
+    string? CustomerEmail,
+    int Page = 1,
+    int PageSize = 10
+);
+
+public record OrderStatsDto(
+    int TotalOrders,
+    int NewOrders,
+    int ProcessingOrders,
+    int CompletedOrders,
+    int CancelledOrders,
+    decimal TotalRevenue
+);
+
+public record PaginatedResult<T>(
+    List<T> Items,
+    int TotalCount,
+    int Page,
+    int PageSize,
+    int TotalPages
+);

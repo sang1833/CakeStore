@@ -1,15 +1,43 @@
 using System.Text.Json.Nodes;
 using cake_store_api.Entities;
 using cake_store_api.Enums;
+using Microsoft.AspNetCore.Identity;
 
 namespace cake_store_api.Data;
 
 public static class DbInitializer
 {
-    public static async Task InitializeAsync(AppDbContext context)
+    public static async Task InitializeAsync(AppDbContext context, RoleManager<IdentityRole> roleManager, UserManager<ApplicationUser> userManager)
     {
         // Ensure database is created
         await context.Database.EnsureCreatedAsync();
+
+        // Create Admin Role if it doesn't exist
+        if (!await roleManager.RoleExistsAsync("Admin"))
+        {
+            await roleManager.CreateAsync(new IdentityRole("Admin"));
+        }
+
+        // Seed default admin user
+        var adminEmail = "admin@cakestore.com";
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        if (adminUser == null)
+        {
+            adminUser = new ApplicationUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                FullName = "System Administrator",
+                PhoneNumber = "0123456789",
+                EmailConfirmed = true
+            };
+            
+            var result = await userManager.CreateAsync(adminUser, "Admin@123");
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            }
+        }
 
         // Check if data already exists
         if (context.Products.Any())

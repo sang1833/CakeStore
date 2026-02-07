@@ -11,4 +11,9 @@ public interface IOrderService
     Task<IEnumerable<Order>> GetOrdersAsync();
     Task<Order?> GetOrderByIdAsync(Guid id);
     Task<IEnumerable<OrderSummaryDto>> GetOrdersByUserIdAsync(string userId);
+    
+    // Admin methods
+    Task<PaginatedResult<Order>> GetOrdersWithFilterAsync(OrderFilterRequest filter);
+    Task<OrderStatsDto> GetOrderStatsAsync();
+    Task UpdateOrderStatusAsync(Guid orderId, OrderStatus newStatus);
 }

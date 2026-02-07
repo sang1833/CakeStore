@@ -11,6 +11,7 @@ be/src/build_log.txt
 be/src/build_error.txt
 be/src/logs/
 be/src/.env
+be/src/.vs
 be/src/appsettings.Production.json
 be/tests/CakeStore.UnitTests/bin/
 be/tests/CakeStore.UnitTests/obj/

@@ -83,9 +83,11 @@ if (app.Environment.IsDevelopment())
     {
         var services = scope.ServiceProvider;
         var context = services.GetRequiredService<AppDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         try 
         {
-            await DbInitializer.InitializeAsync(context);
+            await DbInitializer.InitializeAsync(context, roleManager, userManager);
         }
         catch (Exception ex)
         {
