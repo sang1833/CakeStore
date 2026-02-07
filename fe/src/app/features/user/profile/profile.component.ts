@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
   selector: 'app-profile',
   standalone: true,
   imports: [CommonModule, RouterLink, TranslateModule, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="profile-container animate-fade-in">
       @if (profile(); as p) {
@@ -24,7 +25,7 @@ import { AuthService } from '../../../core/services/auth.service';
           </div>
           <div class="actions">
             <button class="btn-secondary small" (click)="toggleEdit()">
-              {{ isEditing ? 'Cancel' : ('PROFILE.EDIT' | translate) }}
+              {{ isEditing() ? 'Cancel' : ('PROFILE.EDIT' | translate) }}
             </button>
             <button class="btn-danger small" (click)="authService.logout()">
               {{ 'AUTH.LOGOUT' | translate }}
@@ -32,7 +33,7 @@ import { AuthService } from '../../../core/services/auth.service';
           </div>
         </div>
 
-        @if (isEditing) {
+        @if (isEditing()) {
           <div class="edit-form glass-panel">
             <h3>Edit Profile</h3>
             <div class="form-group">
@@ -266,7 +267,7 @@ export class ProfileComponent {
   router = inject(Router);
 
   profile = signal<UserProfile | null>(null);
-  isEditing = false;
+  isEditing = signal(false);
 
   // Form data
   editForm: UpdateProfileRequest = {
@@ -298,8 +299,8 @@ export class ProfileComponent {
   }
 
   toggleEdit() {
-    this.isEditing = !this.isEditing;
-    if (this.isEditing) {
+    this.isEditing.update(v => !v);
+    if (this.isEditing()) {
       this.resetForm();
     }
   }
@@ -307,7 +308,7 @@ export class ProfileComponent {
   saveProfile() {
     this.userService.updateProfile(this.editForm).subscribe({
       next: () => {
-        this.isEditing = false;
+        this.isEditing.set(false);
         this.loadProfile(); // Reload to get fresh data
         alert('Profile updated successfully!');
       },

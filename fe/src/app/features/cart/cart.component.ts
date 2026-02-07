@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { CartService } from '../../core/services/cart.service';
     selector: 'app-cart',
     standalone: true,
     imports: [CommonModule, RouterLink, CurrencyPipe, TranslateModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
     <div class="cart-page-container animate-fade-in">
         <h1>{{ 'CART.TITLE' | translate }}</h1>

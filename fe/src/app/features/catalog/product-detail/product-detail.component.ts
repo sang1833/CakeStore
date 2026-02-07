@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -11,6 +11,7 @@ import { Product, MakeToOrderProduct } from '../../../core/models/product.model'
   selector: 'app-product-detail',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, CurrencyPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (product(); as p) {
       <div class="detail-container glass-panel animate-fade-in">

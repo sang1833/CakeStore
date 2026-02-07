@@ -16,7 +16,9 @@
         "FORGOT_PASSWORD": "Forgot Password?",
         "NEW_HERE": "New here?",
         "ALREADY_HAVE_ACCOUNT": "Already have an account?",
-        "LOGOUT": "Logout"
+        "LOGOUT": "Logout",
+        "PHONE": "Phone Number",
+        "ADDRESS": "Address"
     },
     "CATALOG": {
         "PRE_ORDER": "Pre-order",

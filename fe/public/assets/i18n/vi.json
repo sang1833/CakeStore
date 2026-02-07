@@ -16,7 +16,9 @@
         "FORGOT_PASSWORD": "Quên mật khẩu?",
         "NEW_HERE": "Bạn mới đến đây?",
         "ALREADY_HAVE_ACCOUNT": "Đã có tài khoản?",
-        "LOGOUT": "Đăng xuất"
+        "LOGOUT": "Đăng xuất",
+        "PHONE": "Số điện thoại",
+        "ADDRESS": "Địa chỉ"
     },
     "CATALOG": {
         "PRE_ORDER": "Đặt trước",

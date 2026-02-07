@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
+import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 
 
@@ -10,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="auth-container animate-fade-in">
       <div class="auth-card glass-panel">
@@ -33,14 +35,14 @@ import { AuthService } from '../../../core/services/auth.service';
             <a href="#" class="forgot-pass">{{ 'AUTH.FORGOT_PASSWORD' | translate }}</a>
           </div>
 
-          @if (errorMessage) {
+          @if (errorMessage()) {
             <div class="error-message">
-              {{ errorMessage }}
+              {{ errorMessage() }}
             </div>
           }
           
-          <button type="submit" class="btn-primary full-width" [disabled]="isLoading">
-            @if (isLoading) {
+          <button type="submit" class="btn-primary full-width" [disabled]="isLoading()">
+            @if (isLoading()) {
               {{ 'common.loading' | translate }}
             } @else {
               {{ 'AUTH.SIGN_IN' | translate }}
@@ -159,8 +161,10 @@ import { AuthService } from '../../../core/services/auth.service';
 export class LoginComponent {
   email = '';
   password = '';
-  isLoading = false;
-  errorMessage = '';
+
+  // Signals
+  isLoading = signal(false);
+  errorMessage = signal('');
 
   authService = inject(AuthService);
   router = inject(Router);
@@ -168,17 +172,17 @@ export class LoginComponent {
   onSubmit() {
     if (!this.email || !this.password) return;
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
     this.authService.login({ email: this.email, password: this.password })
+      .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: () => {
           this.router.navigate(['/']);
         },
         error: (err) => {
-          this.isLoading = false;
-          this.errorMessage = 'Invalid email or password'; // Simple error handling
+          this.errorMessage.set('Invalid email or password'); // Simple error handling
           console.error('Login failed', err);
         }
       });

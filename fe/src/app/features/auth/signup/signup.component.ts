@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
+import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../../core/services/auth.service';
 
 
@@ -28,6 +29,16 @@ import { AuthService } from '../../../core/services/auth.service';
             <label>{{ 'AUTH.EMAIL' | translate }}</label>
             <input type="email" [(ngModel)]="email" name="email" placeholder="hello&#64;example.com" required>
           </div>
+
+          <div class="form-group">
+            <label>{{ 'AUTH.PHONE' | translate }}</label>
+            <input type="tel" [(ngModel)]="phoneNumber" name="phoneNumber" placeholder="0123456789" required>
+          </div>
+
+          <div class="form-group">
+            <label>{{ 'AUTH.ADDRESS' | translate }}</label>
+            <input type="text" [(ngModel)]="address" name="address" placeholder="123 Bakery Street" required>
+          </div>
           
           <div class="form-group">
             <label>{{ 'AUTH.PASSWORD' | translate }}</label>
@@ -39,14 +50,14 @@ import { AuthService } from '../../../core/services/auth.service';
             <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
           </div>
           
-          @if (errorMessage) {
+          @if (errorMessage()) {
             <div class="error-message">
-              {{ errorMessage }}
+              {{ errorMessage() }}
             </div>
           }
 
-          <button type="submit" class="btn-primary full-width" [disabled]="isLoading">
-            @if (isLoading) {
+          <button type="submit" class="btn-primary full-width" [disabled]="isLoading()">
+            @if (isLoading()) {
               {{ 'common.loading' | translate }}
             } @else {
               {{ 'AUTH.CREATE_ACCOUNT' | translate }}
@@ -151,29 +162,52 @@ export class SignupComponent {
   email = '';
   password = '';
   confirmPassword = '';
-  isLoading = false;
-  errorMessage = '';
+  phoneNumber = '';
+  address = '';
+
+  // State using Signals for better change detection
+  isLoading = signal(false);
+  errorMessage = signal('');
 
   authService = inject(AuthService);
   router = inject(Router);
 
   onSubmit() {
     if (this.password !== this.confirmPassword) {
-      this.errorMessage = 'Passwords do not match';
+      this.errorMessage.set('Passwords do not match');
       return;
     }
 
-    this.isLoading = true;
-    this.errorMessage = '';
+    this.isLoading.set(true);
+    this.errorMessage.set('');
 
-    this.authService.register({ fullName: this.name, email: this.email, password: this.password })
+    const registerData = {
+      fullName: this.name,
+      email: this.email,
+      password: this.password,
+      phoneNumber: this.phoneNumber,
+      address: this.address
+    };
+
+    this.authService.register(registerData)
+      .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
-        next: () => {
-          this.router.navigate(['/']);
+        next: (response) => {
+          // Assuming successful registration triggers a redirect to login
+          // We can also show a toast or alert with response.message if needed
+          alert('Registration successful! Please login.');
+          this.router.navigate(['/login']);
         },
         error: (err) => {
-          this.isLoading = false;
-          this.errorMessage = 'Registration failed. Please try again.';
+          // Handle backend validation errors if possible
+          if (err.error && Array.isArray(err.error)) {
+            const messages = err.error.map((e: any) => e.description).join(', ');
+            this.errorMessage.set(messages);
+          } else if (err.error && err.error.message) {
+            this.errorMessage.set(err.error.message);
+          } else {
+            this.errorMessage.set('Registration failed. Please try again.');
+          }
           console.error('Signup failed', err);
         }
       });

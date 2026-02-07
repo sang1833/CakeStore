@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ProductService } from '../../../core/services/product.service';
@@ -11,6 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
   selector: 'app-product-list',
   standalone: true,
   imports: [CommonModule, ProductCardComponent, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="hero animate-fade-in">
       <h1>{{ 'CATALOG.HERO_TITLE' | translate }}</h1>

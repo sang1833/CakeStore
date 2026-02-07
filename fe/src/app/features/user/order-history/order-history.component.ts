@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { OrderService } from '../../../core/services/order.service';
   selector: 'app-order-history',
   standalone: true,
   imports: [CommonModule, DatePipe, RouterLink, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="history-container animate-fade-in">
       <h1>{{ 'ORDER.TITLE' | translate }}</h1>

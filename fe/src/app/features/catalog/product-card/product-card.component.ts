@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, OnChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, OnChanges, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { Product } from '../../../core/models/product.model';
   selector: 'app-product-card',
   standalone: true,
   imports: [CommonModule, RouterLink, CurrencyPipe, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
       <!-- Image Area -->
       <div [ngClass]="{'glass-panel animate-fade-in': true}" class="image-wrapper">
