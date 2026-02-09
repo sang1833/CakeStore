@@ -7,7 +7,8 @@ public record OrderSummaryDto(
     DateTime CreatedAt,
     string Status,
     decimal TotalAmount,
-    int ItemCount
+    int ItemCount,
+    List<OrderItemDto>? Items = null
 );
 
 public record OrderDetailDto(

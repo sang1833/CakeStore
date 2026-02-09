@@ -152,6 +152,7 @@ public class OrderService : IOrderService
     public async Task<IEnumerable<OrderSummaryDto>> GetOrdersByUserIdAsync(string userId)
     {
         return await _context.Orders
+            .Include(o => o.Items)
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.CreatedAt)
             .Select(o => new OrderSummaryDto(
@@ -159,7 +160,13 @@ public class OrderService : IOrderService
                 o.CreatedAt,
                 o.Status.ToString(),
                 o.TotalAmount,
-                o.Items.Count
+                o.Items.Count,
+                o.Items.Select(i => new OrderItemDto(
+                    i.ProductId,
+                    i.ProductName,
+                    i.Quantity,
+                    i.Price
+                )).ToList()
             ))
             .ToListAsync();
     }
