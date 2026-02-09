@@ -52,7 +52,9 @@ export interface OrderItemRequest {
 
 export interface CreateOrderRequest {
     customerName: string;
-    customerEmail: string; // Added simplistic customer info
+    customerEmail: string;
+    customerPhone: string;
+    shippingAddress: string;
     deliveryDate?: string; // DateOnly string YYYY-MM-DD
     items: OrderItemRequest[];
 }

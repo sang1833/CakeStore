@@ -14,6 +14,6 @@ export class OrderService {
     }
 
     getOrdersByUser(): Observable<any[]> {
-        return this.api.get<any[]>('orders/user');
+        return this.api.get<any[]>('Orders/history');
     }
 }

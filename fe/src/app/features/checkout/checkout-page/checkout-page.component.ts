@@ -1,16 +1,19 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { CartService } from '../../../core/services/cart.service';
 import { OrderService } from '../../../core/services/order.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserService } from '../../../core/services/user.service';
 import { DateSelectorComponent } from '../date-selector/date-selector.component';
-import { FormsModule } from '@angular/forms';
 import { CreateOrderRequest } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-checkout-page',
   standalone: true,
   imports: [CommonModule, DateSelectorComponent, CurrencyPipe, RouterLink, FormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="checkout-container animate-fade-in">
       <h1>Checkout</h1>
@@ -47,9 +50,17 @@ import { CreateOrderRequest } from '../../../core/models/product.model';
                 }
              </div>
 
-             <!-- Simple Customer Form -->
+             <!-- Customer Form -->
              <div class="customer-form glass-panel">
-                <h2>Your Details</h2>
+                <div class="form-header">
+                    <h2>Your Details</h2>
+                    @if (!auth.isAuthenticated()) {
+                        <div class="auth-hint">
+                            <small>Already have an account? <a routerLink="/login">Log in</a> to auto-fill!</small>
+                        </div>
+                    }
+                </div>
+                
                 <div class="form-group">
                    <label>Name</label>
                    <input [(ngModel)]="customerName" placeholder="Full Name">
@@ -57,6 +68,14 @@ import { CreateOrderRequest } from '../../../core/models/product.model';
                 <div class="form-group">
                    <label>Email</label>
                    <input [(ngModel)]="customerEmail" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                   <label>Phone</label>
+                   <input [(ngModel)]="customerPhone" placeholder="Phone Number">
+                </div>
+                <div class="form-group">
+                   <label>Shipping Address</label>
+                   <input [(ngModel)]="shippingAddress" placeholder="Delivery Address">
                 </div>
              </div>
           </div>
@@ -87,7 +106,7 @@ import { CreateOrderRequest } from '../../../core/models/product.model';
             }
 
             <button class="btn-primary full-width" 
-              [disabled]="(cart.hasMakeToOrderItems() && !selectedDeliveryDate()) || !customerName || !customerEmail || isSubmitting()"
+              [disabled]="(cart.hasMakeToOrderItems() && !selectedDeliveryDate()) || !customerName || !customerEmail || !customerPhone || !shippingAddress || isSubmitting()"
               (click)="placeOrder()">
               @if (isSubmitting()) { 
                 Processing... 
@@ -117,10 +136,13 @@ import { CreateOrderRequest } from '../../../core/models/product.model';
     .meta { font-size: 0.8rem; color: #888; }
     
     .customer-form {
+        .form-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
+        .auth-hint { color: #666; a { color: var(--color-primary); } }
+
         .form-group {
             margin-bottom: 1rem;
             label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
-            input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+            input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         }
     }
     
@@ -132,13 +154,38 @@ import { CreateOrderRequest } from '../../../core/models/product.model';
 export class CheckoutPageComponent {
   cart = inject(CartService);
   orderService = inject(OrderService);
+  auth = inject(AuthService);
+  userService = inject(UserService);
   router = inject(Router);
 
   selectedDeliveryDate = signal<string | null>(null);
+
+  // Note: Using simpler properties for form binding here for simplicity, 
+  // but could be signals or reactive form controls.
   customerName = '';
   customerEmail = '';
+  customerPhone = '';
+  shippingAddress = '';
+
   isSubmitting = signal(false);
   errorMessage = signal<string | null>(null);
+
+  constructor() {
+    // Auto-fill effect
+    effect(() => {
+      if (this.auth.isAuthenticated()) {
+        this.userService.getProfile().subscribe({
+          next: (profile) => {
+            this.customerName = profile.fullName;
+            this.customerEmail = profile.email;
+            this.customerPhone = profile.phone;
+            this.shippingAddress = profile.address;
+          },
+          error: (err) => console.error('Failed to auto-fill profile', err)
+        });
+      }
+    });
+  }
 
   objectKeys(obj: any): string[] { return Object.keys(obj); }
   onDateSelected(date: string) { this.selectedDeliveryDate.set(date); }
@@ -150,7 +197,9 @@ export class CheckoutPageComponent {
     const orderRequest: CreateOrderRequest = {
       customerName: this.customerName,
       customerEmail: this.customerEmail,
-      deliveryDate: this.selectedDeliveryDate() || undefined, // Backend might expect null/undefined if not applicable? Actually logic dictates Type B needs it.
+      customerPhone: this.customerPhone,
+      shippingAddress: this.shippingAddress,
+      deliveryDate: this.selectedDeliveryDate() || undefined,
       items: this.cart.cartItems().map(i => ({
         productId: i.productId,
         quantity: i.quantity,
@@ -162,14 +211,13 @@ export class CheckoutPageComponent {
       next: (res) => {
         alert(`Order Placed Successfully! ID: ${res.orderId}`);
         this.cart.clearCart();
-        this.router.navigate(['/catalog']); // Redirect to catalog (or success page if I had one)
+        this.router.navigate(['/catalog']);
       },
       error: (err) => {
         console.error(err);
         this.isSubmitting.set(false);
         if (err.status === 409) {
           this.errorMessage.set('Sorry, the selected slot just filled up! Please try another date.');
-          // Ideally trigger validation refresh here
         } else {
           this.errorMessage.set('Something went wrong. Please try again.');
         }

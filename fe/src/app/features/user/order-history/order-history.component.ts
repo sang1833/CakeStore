@@ -22,7 +22,7 @@ import { OrderService } from '../../../core/services/order.service';
             <div class="order-header">
               <div>
                 <span class="order-id">#{{ order.id }}</span>
-                <span class="order-date">{{ order.date | date:'mediumDate' }}</span>
+                <span class="order-date">{{ order.createdAt | date:'mediumDate' }}</span>
               </div>
               <span class="status" [class]="order.status.toLowerCase()">
                 {{ 'ORDER.STATUS_' + order.status.toUpperCase() | translate }}
@@ -30,16 +30,16 @@ import { OrderService } from '../../../core/services/order.service';
             </div>
             
             <div class="order-items">
-              @for (item of order.items; track item.name) {
+              @for (item of order.items; track item.productName) {
                 <div class="item">
-                  <span>{{ item.name }} (x{{ item.qty }})</span>
-                  <span>{{ item.price }}</span>
+                  <span>{{ item.productName }} (x{{ item.quantity }})</span>
+                  <span>{{ item.price | currency:'USD' }}</span>
                 </div>
               }
             </div>
             
             <div class="order-footer">
-              <div class="total">{{ 'ORDER.TOTAL' | translate }}: <strong>{{ order.total }}</strong></div>
+              <div class="total">{{ 'ORDER.TOTAL' | translate }}: <strong>{{ order.totalAmount | currency:'USD' }}</strong></div>
               <button class="btn-secondary small">{{ 'ORDER.REORDER' | translate }}</button>
             </div>
           </div>
