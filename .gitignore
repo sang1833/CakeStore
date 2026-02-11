@@ -12,6 +12,7 @@ be/src/build_error.txt
 be/src/logs/
 be/src/.env
 be/src/.vs
+be/src/alloydb.json
 be/src/appsettings.Production.json
 be/tests/CakeStore.UnitTests/bin/
 be/tests/CakeStore.UnitTests/obj/
